@@ -568,10 +568,8 @@ void Undistort::makeOptimalK_crop()
 	// 1. stretch the center lines as far as possible, to get initial coarse quess.
 	float* tgX = new float[100000];
 	float* tgY = new float[100000];
-	float minX = 0;
-	float maxX = 0;
-	float minY = 0;
-	float maxY = 0;
+	float minX = 0, maxX = 0;
+	float minY = 0, maxY = 0;
 
 	for(int x=0; x<100000;x++)
 	{
@@ -579,8 +577,8 @@ void Undistort::makeOptimalK_crop()
 		tgY[x] = 0;
 	}
 
-	printf("	");
-	distortCoordinates(tgX,tgY,tgX,tgY,100000);
+	printf("	");	distortCoordinates(tgX,tgY,tgX,tgY,100000);
+
 	for(int x=0; x<100000;x++)
 	{
 		if(tgX[x] > 0 && tgX[x] < wOrg-1)
@@ -594,8 +592,8 @@ void Undistort::makeOptimalK_crop()
 		tgY[y] = (y-50000.0f) / 10000.0f;
 		tgX[y] = 0;
 	}
-	printf("	");
-	distortCoordinates(tgX,tgY,tgX,tgY,100000);
+
+	printf("	"); distortCoordinates(tgX,tgY,tgX,tgY,100000);
 
 	for(int y=0; y<100000;y++)
 	{
@@ -630,8 +628,7 @@ void Undistort::makeOptimalK_crop()
 			remapX[y*2+1] = maxX;
 			remapY[y*2] = remapY[y*2+1] = minY + (maxY-minY) * (float)y / ((float)h-1.0f);
 		}
-		printf("	");
-		distortCoordinates(remapX,remapY,remapX,remapY,2*h);
+		printf("	"); distortCoordinates(remapX,remapY,remapX,remapY,2*h);
 		for(int y=0;y<h;y++)
 		{
 			if(!(remapX[2*y] > 0 && remapX[2*y] < wOrg-1)) oobLeft = true;
@@ -646,8 +643,7 @@ void Undistort::makeOptimalK_crop()
 			remapY[x*2+1] = maxY;
 			remapX[x*2] = remapX[x*2+1] = minX + (maxX-minX) * (float)x / ((float)w-1.0f);
 		}
-		printf("	");
-		distortCoordinates(remapX,remapY,remapX,remapY,2*w);
+		printf("	"); distortCoordinates(remapX,remapY,remapX,remapY,2*w);
 
 
 		for(int x=0;x<w;x++)
@@ -1175,7 +1171,7 @@ void UndistortPinhole::distortCoordinates(float* in_x, float* in_y, float* out_x
 {
 	printf("	UndistortPinhole::distortCoordinates() in Undistort.cpp\n");
 	// current camera parameters
-    float fx = parsOrg[0];
+    float fx = parsOrg[0];//여기만 사용되는 듯..
     float fy = parsOrg[1];
     float cx = parsOrg[2];
     float cy = parsOrg[3];
@@ -1187,13 +1183,13 @@ void UndistortPinhole::distortCoordinates(float* in_x, float* in_y, float* out_x
 
 	for(int i=0;i<n;i++)
 	{
-		//screen coord -> ndc
+		//(K는 inverse projection에 사용) screen coord -> ndc
 		float x = in_x[i];
 		float y = in_y[i];
 		float ix = (x - ocx) / ofx;
 		float iy = (y - ocy) / ofy;
 
-		//ndc -> screen coord
+		//(camera.txt의 fx fy cx cy는 Projection에 사용) ndc -> screen coord
 		ix = fx*ix+cx;
 		iy = fy*iy+cy;
 		out_x[i] = ix;
