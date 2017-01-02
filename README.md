@@ -1,3 +1,7 @@
+Reading Calibration
+/home/feelix/dso/build/bin/dso_dataset files=/media/feelix/2TB/kitti_vo_dataset/00/image_0/ calib=/media/feelix/2TB/kitti_vo_dataset/camera.txt  vignette=/home/feelix/tum_dataset/sequence_42/vignette.png preset=3 mode=1
+
+
 # DSO: Direct Sparse Odometry
 
 For more information see

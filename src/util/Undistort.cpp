@@ -263,9 +263,13 @@ Undistort::~Undistort()
 	if(remapY != 0) delete[] remapY;
 }
 
+
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//camera.txt file read..
 Undistort* Undistort::getUndistorterForFile(std::string configFilename, std::string gammaFilename, std::string vignetteFilename)
 {
-	printf("Reading Calibration from file %s",configFilename.c_str());
+	printf("	Undistort::getUndistorterForFile() in Undistort.cpp Reading Calibration from file %s",configFilename.c_str());
 
 	std::ifstream f(configFilename.c_str());
 	if (!f.good())
@@ -286,9 +290,7 @@ Undistort* Undistort::getUndistorterForFile(std::string configFilename, std::str
 	Undistort* u;
 
     // for backwards-compatibility: Use RadTan model for 8 parameters.
-	if(std::sscanf(l1.c_str(), "%f %f %f %f %f %f %f %f",
-			&ic[0], &ic[1], &ic[2], &ic[3],
-			&ic[4], &ic[5], &ic[6], &ic[7]) == 8)
+	if(std::sscanf(l1.c_str(), "%f %f %f %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
 	{
         printf("found RadTan (OpenCV) camera model, building rectifier.\n");
         u = new UndistortRadTan(configFilename.c_str(), true);
@@ -296,83 +298,54 @@ Undistort* Undistort::getUndistorterForFile(std::string configFilename, std::str
     }
 
     // for backwards-compatibility: Use Pinhole / FoV model for 5 parameter.
-    else if(std::sscanf(l1.c_str(), "%f %f %f %f %f",
-			&ic[0], &ic[1], &ic[2], &ic[3], &ic[4]) == 5)
+    else if(std::sscanf(l1.c_str(), "%f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4]) == 5)
 	{
 		if(ic[4]==0)
 		{
-			printf("found PINHOLE camera model, building rectifier.\n");
+			printf("		found PINHOLE camera model, building rectifier.\n");
             u = new UndistortPinhole(configFilename.c_str(), true);
 			if(!u->isValid()) {delete u; return 0; }
 		}
 		else
 		{
-			printf("found ATAN camera model, building rectifier.\n");
+			printf("		found ATAN camera model, building rectifier.\n");
             u = new UndistortFOV(configFilename.c_str(), true);
 			if(!u->isValid()) {delete u; return 0; }
 		}
 	}
-
-
-
-
-
     // clean model selection implementation.
-    else if(std::sscanf(l1.c_str(), "KannalaBrandt %f %f %f %f %f %f %f %f",
-            &ic[0], &ic[1], &ic[2], &ic[3],
-            &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
+    else if(std::sscanf(l1.c_str(), "KannalaBrandt %f %f %f %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
     {
         u = new UndistortKB(configFilename.c_str(), false);
         if(!u->isValid()) {delete u; return 0; }
     }
-
-
-    else if(std::sscanf(l1.c_str(), "RadTan %f %f %f %f %f %f %f %f",
-            &ic[0], &ic[1], &ic[2], &ic[3],
-            &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
+    else if(std::sscanf(l1.c_str(), "RadTan %f %f %f %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
     {
         u = new UndistortRadTan(configFilename.c_str(), false);
         if(!u->isValid()) {delete u; return 0; }
     }
-
-
-    else if(std::sscanf(l1.c_str(), "EquiDistant %f %f %f %f %f %f %f %f",
-            &ic[0], &ic[1], &ic[2], &ic[3],
-            &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
+    else if(std::sscanf(l1.c_str(), "EquiDistant %f %f %f %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4], &ic[5], &ic[6], &ic[7]) == 8)
     {
         u = new UndistortEquidistant(configFilename.c_str(), false);
         if(!u->isValid()) {delete u; return 0; }
     }
-
-
-    else if(std::sscanf(l1.c_str(), "FOV %f %f %f %f %f",
-            &ic[0], &ic[1], &ic[2], &ic[3],
-            &ic[4]) == 5)
+    else if(std::sscanf(l1.c_str(), "FOV %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4]) == 5)
     {
         u = new UndistortFOV(configFilename.c_str(), false);
         if(!u->isValid()) {delete u; return 0; }
     }
-
-
-    else if(std::sscanf(l1.c_str(), "Pinhole %f %f %f %f %f",
-            &ic[0], &ic[1], &ic[2], &ic[3],
-            &ic[4]) == 5)
+    else if(std::sscanf(l1.c_str(), "Pinhole %f %f %f %f %f", &ic[0], &ic[1], &ic[2], &ic[3], &ic[4]) == 5)
     {
         u = new UndistortPinhole(configFilename.c_str(), false);
         if(!u->isValid()) {delete u; return 0; }
     }
-
-
     else
     {
         printf("could not read calib file! exit.");
         exit(1);
     }
 
-	u->loadPhotometricCalibration(
-				gammaFilename,
-				"",
-				vignetteFilename);
+	u->loadPhotometricCalibration(gammaFilename, "", vignetteFilename);
 
 	return u;
 }
@@ -584,10 +557,12 @@ void Undistort::applyBlurNoise(float* img) const
 	delete[] noiseMapX;
 	delete[] noiseMapY;
 }
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 void Undistort::makeOptimalK_crop()
 {
-	printf("finding CROP optimal new model!\n");
+	printf("	Undistort::makeOptimalK_crop() in Undistort.cpp finding CROP optimal new model! (K계산)\n");
+
 	K.setIdentity();
 
 	// 1. stretch the center lines as far as possible, to get initial coarse quess.
@@ -599,8 +574,13 @@ void Undistort::makeOptimalK_crop()
 	float maxY = 0;
 
 	for(int x=0; x<100000;x++)
-	{tgX[x] = (x-50000.0f) / 10000.0f; tgY[x] = 0;}
-	distortCoordinates(tgX, tgY,tgX, tgY,100000);
+	{
+		tgX[x] = (x-50000.0f) / 10000.0f;
+		tgY[x] = 0;
+	}
+
+	printf("	");
+	distortCoordinates(tgX,tgY,tgX,tgY,100000);
 	for(int x=0; x<100000;x++)
 	{
 		if(tgX[x] > 0 && tgX[x] < wOrg-1)
@@ -610,8 +590,13 @@ void Undistort::makeOptimalK_crop()
 		}
 	}
 	for(int y=0; y<100000;y++)
-	{tgY[y] = (y-50000.0f) / 10000.0f; tgX[y] = 0;}
-	distortCoordinates(tgX, tgY,tgX, tgY,100000);
+	{
+		tgY[y] = (y-50000.0f) / 10000.0f;
+		tgX[y] = 0;
+	}
+	printf("	");
+	distortCoordinates(tgX,tgY,tgX,tgY,100000);
+
 	for(int y=0; y<100000;y++)
 	{
 		if(tgY[y] > 0 && tgY[y] < hOrg-1)
@@ -628,9 +613,7 @@ void Undistort::makeOptimalK_crop()
 	minY *= 1.01;
 	maxY *= 1.01;
 
-
-
-	printf("initial range: x: %.4f - %.4f; y: %.4f - %.4f!\n", minX, maxX, minY, maxY);
+	printf("		initial range: x: %.4f ~ %.4f; y: %.4f ~ %.4f!\n", minX, maxX, minY, maxY);
 
 
 
@@ -647,13 +630,12 @@ void Undistort::makeOptimalK_crop()
 			remapX[y*2+1] = maxX;
 			remapY[y*2] = remapY[y*2+1] = minY + (maxY-minY) * (float)y / ((float)h-1.0f);
 		}
-		distortCoordinates(remapX, remapY,remapX, remapY,2*h);
+		printf("	");
+		distortCoordinates(remapX,remapY,remapX,remapY,2*h);
 		for(int y=0;y<h;y++)
 		{
-			if(!(remapX[2*y] > 0 && remapX[2*y] < wOrg-1))
-				oobLeft = true;
-			if(!(remapX[2*y+1] > 0 && remapX[2*y+1] < wOrg-1))
-				oobRight = true;
+			if(!(remapX[2*y] > 0 && remapX[2*y] < wOrg-1)) oobLeft = true;
+			if(!(remapX[2*y+1] > 0 && remapX[2*y+1] < wOrg-1)) oobRight = true;
 		}
 
 
@@ -664,24 +646,20 @@ void Undistort::makeOptimalK_crop()
 			remapY[x*2+1] = maxY;
 			remapX[x*2] = remapX[x*2+1] = minX + (maxX-minX) * (float)x / ((float)w-1.0f);
 		}
-		distortCoordinates(remapX, remapY,remapX, remapY,2*w);
+		printf("	");
+		distortCoordinates(remapX,remapY,remapX,remapY,2*w);
 
 
 		for(int x=0;x<w;x++)
 		{
-			if(!(remapY[2*x] > 0 && remapY[2*x] < hOrg-1))
-				oobTop = true;
-			if(!(remapY[2*x+1] > 0 && remapY[2*x+1] < hOrg-1))
-				oobBottom = true;
+			if(!(remapY[2*x] > 0 && remapY[2*x] < hOrg-1)) oobTop = true;
+			if(!(remapY[2*x+1] > 0 && remapY[2*x+1] < hOrg-1)) oobBottom = true;
 		}
-
 
 		if((oobLeft || oobRight) && (oobTop || oobBottom))
 		{
-			if((maxX-minX) > (maxY-minY))
-				oobBottom = oobTop = false;	// only shrink left/right
-			else
-				oobLeft = oobRight = false; // only shrink top/bottom
+			if((maxX-minX) > (maxY-minY)) oobBottom = oobTop = false;	// only shrink left/right
+			else                          oobLeft = oobRight = false; // only shrink top/bottom
 		}
 
 		if(oobLeft) minX *= 0.995;
@@ -691,13 +669,9 @@ void Undistort::makeOptimalK_crop()
 
 		iteration++;
 
+		printf("		  iter %02d: range: x: %.4f ~ %.4f; y: %.4f ~ %.4f!\n", iteration,  minX, maxX, minY, maxY);
 
-		printf("iteration %05d: range: x: %.4f - %.4f; y: %.4f - %.4f!\n", iteration,  minX, maxX, minY, maxY);
-		if(iteration > 500)
-		{
-			printf("FAILED TO COMPUTE GOOD CAMERA MATRIX - SOMETHING IS SERIOUSLY WRONG. ABORTING \n");
-			exit(1);
-		}
+		if(iteration > 500){ printf("FAILED TO COMPUTE GOOD CAMERA MATRIX - SOMETHING IS SERIOUSLY WRONG. ABORTING \n"); exit(1); }
 	}
 
 	K(0,0) = ((float)w-1.0f)/(maxX-minX);
@@ -715,6 +689,7 @@ void Undistort::makeOptimalK_full()
 
 void Undistort::readFromFile(const char* configFileName, int nPars, std::string prefix)
 {
+	printf("	Undistort::readFromFile() in Undistort.cpp\n");
 	photometricUndist=0;
 	valid = false;
 	passthrough=false;
@@ -745,9 +720,8 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 		if(std::sscanf(l1.c_str(), buf, &parsOrg[0], &parsOrg[1], &parsOrg[2], &parsOrg[3], &parsOrg[4]) == 5 &&
 				std::sscanf(l2.c_str(), "%d %d", &wOrg, &hOrg) == 2)
 		{
-			printf("Input resolution: %d %d\n",wOrg, hOrg);
-			printf("In: %f %f %f %f %f\n",
-					parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3], parsOrg[4]);
+			printf("		Input resolution: %d %d\n",wOrg, hOrg);
+			printf("		In: %f %f %f %f %f\n", parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3], parsOrg[4]);
 		}
 		else
 		{
@@ -767,9 +741,7 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 				std::sscanf(l2.c_str(), "%d %d", &wOrg, &hOrg) == 2)
 		{
 			printf("Input resolution: %d %d\n",wOrg, hOrg);
-			printf("In: %s%f %f %f %f %f %f %f %f\n",
-					prefix.c_str(),
-					parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3], parsOrg[4], parsOrg[5], parsOrg[6], parsOrg[7]);
+			printf("In: %s%f %f %f %f %f %f %f %f\n", prefix.c_str(), parsOrg[0], parsOrg[1], parsOrg[2], parsOrg[3], parsOrg[4], parsOrg[5], parsOrg[6], parsOrg[7]);
 		}
 		else
 		{
@@ -811,7 +783,7 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 	if(l3 == "crop")
 	{
 		outputCalibration[0] = -1;
-        printf("Out: Rectify Crop\n");
+        printf("		Out: Rectify Crop\n");
 	}
 	else if(l3 == "full")
 	{
@@ -825,8 +797,7 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 	}
 	else if(std::sscanf(l3.c_str(), "%f %f %f %f %f", &outputCalibration[0], &outputCalibration[1], &outputCalibration[2], &outputCalibration[3], &outputCalibration[4]) == 5)
 	{
-		printf("Out: %f %f %f %f %f\n",
-				outputCalibration[0], outputCalibration[1], outputCalibration[2], outputCalibration[3], outputCalibration[4]);
+		printf("Out: %f %f %f %f %f\n", outputCalibration[0], outputCalibration[1], outputCalibration[2], outputCalibration[3], outputCalibration[4]);
 
 	}
 	else
@@ -843,17 +814,15 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 		if(benchmarkSetting_width != 0)
         {
 			w = benchmarkSetting_width;
-            if(outputCalibration[0] == -3)
-                outputCalibration[0] = -1;  // crop instead of none, since probably resolution changed.
+            if(outputCalibration[0] == -3) outputCalibration[0] = -1;  // crop instead of none, since probably resolution changed.
         }
         if(benchmarkSetting_height != 0)
         {
 			h = benchmarkSetting_height;
-            if(outputCalibration[0] == -3)
-                outputCalibration[0] = -1;  // crop instead of none, since probably resolution changed.
+            if(outputCalibration[0] == -3) outputCalibration[0] = -1;  // crop instead of none, since probably resolution changed.
         }
 
-		printf("Output resolution: %d %d\n",w, h);
+		printf("		Output resolution: %d %d\n",w, h);
 	}
 	else
 	{
@@ -864,11 +833,12 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
     remapX = new float[w*h];
     remapY = new float[w*h];
 
-	if(outputCalibration[0] == -1)
-		makeOptimalK_crop();
-	else if(outputCalibration[0] == -2)
-		makeOptimalK_full();
-	else if(outputCalibration[0] == -3)
+
+    //■■■■■■■■
+    //■■■■■■■■
+	if(outputCalibration[0] == -1) makeOptimalK_crop();//crop
+	else if(outputCalibration[0] == -2) makeOptimalK_full();//full
+	else if(outputCalibration[0] == -3)//none
 	{
 		if(w != wOrg || h != hOrg)
 		{
@@ -884,14 +854,11 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 	}
 	else
 	{
-
-
         if(outputCalibration[2] > 1 || outputCalibration[3] > 1)
         {
             printf("\n\n\nWARNING: given output calibration (%f %f %f %f) seems wrong. It needs to be relative to image width / height!\n\n\n",
                    outputCalibration[0],outputCalibration[1],outputCalibration[2],outputCalibration[3]);
         }
-
 
 		K.setIdentity();
         K(0,0) = outputCalibration[0] * w;
@@ -944,12 +911,8 @@ void Undistort::readFromFile(const char* configFileName, int nPars, std::string 
 
 	valid = true;
 
-
-
-
-	printf("\nRectified Kamera Matrix:\n");
+	printf("\n		Rectified Kamera Matrix:\n");
 	std::cout << K << "\n\n";
-
 }
 
 
@@ -1196,18 +1159,21 @@ void UndistortKB::distortCoordinates(float* in_x, float* in_y, float* out_x, flo
 
 UndistortPinhole::UndistortPinhole(const char* configFileName, bool noprefix)
 {
-    if(noprefix)
-        readFromFile(configFileName, 5);
-    else
-        readFromFile(configFileName, 5,"Pinhole ");
+    if(noprefix) readFromFile(configFileName, 5);
+    else         readFromFile(configFileName, 5,"Pinhole ");
 
 }
 UndistortPinhole::~UndistortPinhole()
 {
 }
 
+
+// distortCoordinates(remapX, remapY, remapX, remapY, 2*h)
+// distortCoordinates(remapX, remapY, remapX, remapY, 2*w)
+// distortCoordinates(remapX, remapY, remapX, remapY, h*w)
 void UndistortPinhole::distortCoordinates(float* in_x, float* in_y, float* out_x, float* out_y, int n) const
 {
+	printf("	UndistortPinhole::distortCoordinates() in Undistort.cpp\n");
 	// current camera parameters
     float fx = parsOrg[0];
     float fy = parsOrg[1];
@@ -1221,10 +1187,13 @@ void UndistortPinhole::distortCoordinates(float* in_x, float* in_y, float* out_x
 
 	for(int i=0;i<n;i++)
 	{
+		//screen coord -> ndc
 		float x = in_x[i];
 		float y = in_y[i];
 		float ix = (x - ocx) / ofx;
 		float iy = (y - ocy) / ofy;
+
+		//ndc -> screen coord
 		ix = fx*ix+cx;
 		iy = fy*iy+cy;
 		out_x[i] = ix;
