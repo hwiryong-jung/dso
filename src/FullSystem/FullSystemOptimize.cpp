@@ -287,7 +287,7 @@ bool FullSystem::doStepFromBackup(float stepfacC,float stepfacT,float stepfacR,f
 
 
     if(!setting_debugout_runquiet)
-        printf("STEPS: A %.1f; B %.1f; R %.1f; T %.1f. \t",
+        printf("STEPs: A %.1f; B %.1f; R %.1f; T %.1f. \t",
                 sqrtf(sumA) / (0.0005*setting_thOptIterations),
                 sqrtf(sumB) / (0.00005*setting_thOptIterations),
                 sqrtf(sumR) / (0.00005*setting_thOptIterations),

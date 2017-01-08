@@ -447,12 +447,14 @@ int main( int argc, char** argv )
             }
         }
 
+        //
         struct timeval tv_start;
         gettimeofday(&tv_start, NULL);
         clock_t started = clock();
         double sInitializerOffset=0;
 
 
+        //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
         for(int ii=0;ii<(int)idsToPlay.size(); ii++)
         {
             if(!fullSystem->initialized)	// if not initialized: reset start time.
@@ -464,23 +466,18 @@ int main( int argc, char** argv )
 
             int i = idsToPlay[ii];
 
-
             ImageAndExposure* img;
-            if(preload)
-                img = preloadedImages[ii];
-            else
-                img = reader->getImage(i);
+            if(preload) img = preloadedImages[ii];
+            else        img = reader->getImage(i);
 
-
-
-            bool skipFrame=false;
+            //■■■■■■■■
+            bool skipFrame = false;
             if(playbackSpeed!=0)
             {
                 struct timeval tv_now; gettimeofday(&tv_now, NULL);
                 double sSinceStart = sInitializerOffset + ((tv_now.tv_sec-tv_start.tv_sec) + (tv_now.tv_usec-tv_start.tv_usec)/(1000.0f*1000.0f));
 
-                if(sSinceStart < timesToPlayAt[ii])
-                    usleep((int)((timesToPlayAt[ii]-sSinceStart)*1000*1000));
+                if(sSinceStart < timesToPlayAt[ii]) usleep((int)((timesToPlayAt[ii]-sSinceStart)*1000*1000));
                 else if(sSinceStart > timesToPlayAt[ii]+0.5+0.1*(ii%2))
                 {
                     printf("SKIPFRAME %d (play at %f, now it is %f)!\n", ii, timesToPlayAt[ii], sSinceStart);
@@ -488,12 +485,8 @@ int main( int argc, char** argv )
                 }
             }
 
-
-
+            //■■■■■■■■
             if(!skipFrame) fullSystem->addActiveFrame(img, i);
-
-
-
 
             delete img;
 
@@ -521,11 +514,13 @@ int main( int argc, char** argv )
 
             if(fullSystem->isLost)
             {
-                    printf("LOST!!\n");
-                    break;
+                printf("LOST!!\n");
+                break;
             }
 
         }
+        //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
         fullSystem->blockUntilMappingIsFinished();
         clock_t ended = clock();
         struct timeval tv_end;
