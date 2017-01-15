@@ -295,19 +295,24 @@ void CoarseTracker::makeCoarseDepthL0(std::vector<FrameHessian*> frameHessians)
 }
 
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//#if defined(ENABLE_SSE)
 void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l)
 {
-	acc.initialize();
+	printf("♣♣CoarseTracker::calcGSSSE()♣♣\n");
 
+	acc.initialize();//Accumulator9
+
+	//■■■■■■■■
 	__m128 fxl = _mm_set1_ps(fx[lvl]);
 	__m128 fyl = _mm_set1_ps(fy[lvl]);
-	__m128 b0 = _mm_set1_ps(lastRef_aff_g2l.b);
-	__m128 a = _mm_set1_ps((float)(AffLight::fromToVecExposure(lastRef->ab_exposure, newFrame->ab_exposure, lastRef_aff_g2l, aff_g2l)[0]));
+	__m128 b0  = _mm_set1_ps(lastRef_aff_g2l.b);
+	__m128 a   = _mm_set1_ps((float)(AffLight::fromToVecExposure(lastRef->ab_exposure, newFrame->ab_exposure, lastRef_aff_g2l, aff_g2l)[0]));
 
-	__m128 one = _mm_set1_ps(1);
+	__m128 one      = _mm_set1_ps(1);
 	__m128 minusOne = _mm_set1_ps(-1);
-	__m128 zero = _mm_set1_ps(0);
+	__m128 zero     = _mm_set1_ps(0);
 
 	int n = buf_warped_n;
 	assert(n%4==0);
@@ -315,10 +320,9 @@ void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, 
 	{
 		__m128 dx = _mm_mul_ps(_mm_load_ps(buf_warped_dx+i), fxl);
 		__m128 dy = _mm_mul_ps(_mm_load_ps(buf_warped_dy+i), fyl);
-		__m128 u = _mm_load_ps(buf_warped_u+i);
-		__m128 v = _mm_load_ps(buf_warped_v+i);
+		__m128 u  = _mm_load_ps(buf_warped_u+i);
+		__m128 v  = _mm_load_ps(buf_warped_v+i);
 		__m128 id = _mm_load_ps(buf_warped_idepth+i);
-
 
 		acc.updateSSE_eighted(
 				_mm_mul_ps(id,dx),
@@ -336,8 +340,10 @@ void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, 
 				_mm_load_ps(buf_warped_residual+i),
 				_mm_load_ps(buf_warped_weight+i));
 	}
+	//■■■■■■■■
 
 	acc.finish();
+
 	H_out = acc.H.topLeftCorner<8,8>().cast<double>() * (1.0f/n);
 	b_out = acc.H.topRightCorner<8,1>().cast<double>() * (1.0f/n);
 
@@ -354,7 +360,134 @@ void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, 
 	b_out.segment<1>(6) *= SCALE_A;
 	b_out.segment<1>(7) *= SCALE_B;
 }
+//#else
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+void CoarseTracker::calcGSCPU(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l)
+{
+	printf("♣♣CoarseTracker::calcGSCPU()♣♣\n");
 
+	acc.initialize();//Accumulator9
+
+	//■■■■■■■■
+	float fxl[4];
+	_cpu_set1_ps(fxl, fx[lvl]);
+	//printf("fxl = (%lf,%lf,%lf,%lf)\n", fxl[0], fxl[1], fxl[2], fxl[3]);
+
+	float fyl[4];
+	_cpu_set1_ps(fyl, fy[lvl]);
+
+	float b0[4];
+	_cpu_set1_ps(b0, lastRef_aff_g2l.b);
+
+	float a[4];
+	_cpu_set1_ps(a, (float)(AffLight::fromToVecExposure(lastRef->ab_exposure, newFrame->ab_exposure, lastRef_aff_g2l, aff_g2l)[0]));
+
+	float one[4];
+	_cpu_set1_ps(one, 1.0f);
+	printf("one = (%lf,%lf,%lf,%lf)\n", one[0], one[1], one[2], one[3]);
+
+	float minusOne[4];
+	_cpu_set1_ps(minusOne, -1.0f);
+	printf("minusOne = (%lf,%lf,%lf,%lf)\n", minusOne[0], minusOne[1], minusOne[2], minusOne[3]);
+
+	float zero[4];
+	_cpu_set1_ps(zero, 0.0f);
+	printf("zero = (%lf,%lf,%lf,%lf)\n", zero[0], zero[1], zero[2], zero[3]);
+
+	int n = buf_warped_n;
+	assert(n%4==0);
+	for(int i=0; i<n; i+=4)
+	{
+		float dx[4];
+		_cpu_mul_ps(dx, buf_warped_dx+i, fxl);
+
+		float dy[4];
+		_cpu_mul_ps(dy, buf_warped_dy+i, fyl);
+
+		float u[4];
+		_cpu_load_ps(u, buf_warped_u+i);
+
+		float v[4];
+		_cpu_load_ps(v, buf_warped_v+i);
+
+		float id[4];
+		_mm_load_ps(buf_warped_idepth+i);
+
+		float arg0[4], arg1[4], arg2[4], arg3[4], arg4[4];
+		float arg5[4], arg6[4], arg7[4], arg8[4], arg9[4];
+		float uv[4], vv[4], uu[4], uvdx[4], uvdy[4], udx[4], udy[4], vdx[4], vdy[4];
+		float udy_vdx[4], one_add_vv[4], one_add_uu[4];
+		float dyone_add_vv[4], dxone_add_uu[4];
+		float uvdx_add_dyone_add_vv[4];
+		float uvdy_add_dxone_add_uu[4];
+		float zero_uvdx_add_dyone_add_vv[4], b0_buf[4], ab0_buf[4];
+		float udx_add_vdy[4], idudx_add_vdy[4];
+
+		_cpu_mul_ps(arg0,id,dx);
+		_cpu_mul_ps(arg1,id,dy);
+		_cpu_mul_ps(udx,u,dx);
+	    _cpu_mul_ps(vdy,v,dy);
+	    _cpu_add_ps(udx_add_vdy,udx,vdy);
+	    _cpu_mul_ps(idudx_add_vdy,id,udx_add_vdy);
+
+		_cpu_sub_ps(arg2,zero,idudx_add_vdy);
+
+		_cpu_mul_ps(uv,u,v);
+		_cpu_mul_ps(vv,v,v);
+		_cpu_mul_ps(uu,u,u);
+		_cpu_mul_ps(uvdx,uv,dx);
+		_cpu_mul_ps(uvdy,uv,dy);
+		_cpu_mul_ps(udy,u,dy);
+		_cpu_mul_ps(vdx,v,dx);
+		_cpu_sub_ps(udy_vdx,udy,vdx);
+		_cpu_add_ps(one_add_vv,one,vv);
+		_cpu_add_ps(one_add_uu,one,uu);
+		_cpu_mul_ps(dyone_add_vv,dy,one_add_vv);
+		_cpu_mul_ps(dxone_add_uu,dx,one_add_uu);
+		_cpu_add_ps(uvdx_add_dyone_add_vv,uvdx,dyone_add_vv);
+		_cpu_add_ps(uvdy_add_dxone_add_uu,uvdy,dxone_add_uu);
+		_cpu_sub_ps(zero_uvdx_add_dyone_add_vv,zero, uvdx_add_dyone_add_vv);
+		_cpu_sub_ps(b0_buf,b0, buf_warped_refColor+i);
+		_cpu_mul_ps(ab0_buf,a,b0_buf);
+
+
+		acc.updateCPU_eighted(
+				arg0,
+				arg1,
+				arg2,
+				zero_uvdx_add_dyone_add_vv,//3
+				uvdy_add_dxone_add_uu,//4
+				udy_vdx,//5
+				ab0_buf,//6
+				minusOne,//7
+				buf_warped_residual+i,//8
+				buf_warped_weight+i);//9
+	}
+
+	acc.finish();
+
+	//■■■■■■■■
+	H_out = acc.H.topLeftCorner<8,8>().cast<double>() * (1.0f/n);
+	b_out = acc.H.topRightCorner<8,1>().cast<double>() * (1.0f/n);
+
+	H_out.block<8,3>(0,0) *= SCALE_XI_ROT;
+	H_out.block<8,3>(0,3) *= SCALE_XI_TRANS;
+	H_out.block<8,1>(0,6) *= SCALE_A;
+	H_out.block<8,1>(0,7) *= SCALE_B;
+	H_out.block<3,8>(0,0) *= SCALE_XI_ROT;
+	H_out.block<3,8>(3,0) *= SCALE_XI_TRANS;
+	H_out.block<1,8>(6,0) *= SCALE_A;
+	H_out.block<1,8>(7,0) *= SCALE_B;
+
+	b_out.segment<3>(0) *= SCALE_XI_ROT;
+	b_out.segment<3>(3) *= SCALE_XI_TRANS;
+	b_out.segment<1>(6) *= SCALE_A;
+	b_out.segment<1>(7) *= SCALE_B;
+}
+//#endif
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
 
@@ -536,13 +669,10 @@ void CoarseTracker::setCoarseTrackingRef(
 	firstCoarseRMSE=-1;
 
 }
-bool CoarseTracker::trackNewestCoarse(
-		FrameHessian* newFrameHessian,
-		SE3 &lastToNew_out, AffLight &aff_g2l_out,
-		int coarsestLvl,
-		Vec5 minResForAbort,
-		IOWrap::Output3DWrapper* wrap)
+bool CoarseTracker::trackNewestCoarse(FrameHessian* newFrameHessian, SE3 &lastToNew_out, AffLight &aff_g2l_out,
+		                              int coarsestLvl, Vec5 minResForAbort, IOWrap::Output3DWrapper* wrap)
 {
+	printf("■■■■ CoarseTracker::trackNewestCoarse()■■■■\n");
 	debugPlot = setting_render_displayCoarseTrackingFull;
 	debugPrint = false;
 
@@ -575,9 +705,12 @@ bool CoarseTracker::trackNewestCoarse(
             if(!setting_debugout_runquiet)
                 printf("INCREASING cutoff to %f (ratio is %f)!\n", setting_coarseCutoffTH*levelCutoffRepeat, resOld[5]);
 		}
-
-		calcGSSSE(lvl, H, b, refToNew_current, aff_g2l_current);
-
+#if defined(ENABLE_SSE)
+		printf("(%d)", lvl);
+		calcGSSSE(lvl, H, b, refToNew_current, aff_g2l_current);//■■■■
+#else
+		calcGSCPU(lvl, H, b, refToNew_current, aff_g2l_current);//■■■■
+#endif
 		float lambda = 0.01;
 
 		if(debugPrint)
@@ -663,7 +796,13 @@ bool CoarseTracker::trackNewestCoarse(
 			}
 			if(accept)
 			{
-				calcGSSSE(lvl, H, b, refToNew_new, aff_g2l_new);
+#if defined(ENABLE_SSE)
+				printf("[%d][%d]", lvl, iteration);
+				calcGSSSE(lvl, H, b, refToNew_new, aff_g2l_new);//■■■■
+#else
+				calcGSCPU(lvl, H, b, refToNew_new, aff_g2l_new);//■■■■
+#endif
+
 				resOld = resNew;
 				aff_g2l_current = aff_g2l_new;
 				refToNew_current = refToNew_new;
@@ -717,6 +856,7 @@ bool CoarseTracker::trackNewestCoarse(
 	if(setting_affineOptModeA < 0) aff_g2l_out.a=0;
 	if(setting_affineOptModeB < 0) aff_g2l_out.b=0;
 
+	printf("■■■■ ~CoarseTracker::trackNewestCoarse()■■■■\n");
 	return true;
 }
 

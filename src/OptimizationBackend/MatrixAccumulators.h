@@ -24,6 +24,7 @@
 
 #pragma once
 #include "util/NumType.h"
+#include "util/mm_to_cpu.h"
 
 
 namespace dso
@@ -85,6 +86,9 @@ private:
   }
 };
 
+
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 class Accumulator11
 {
 public:
@@ -108,40 +112,63 @@ public:
 	A=SSEData1m[0+0] + SSEData1m[0+1] + SSEData1m[0+2] + SSEData1m[0+3];
   }
 
-
-  inline void updateSingle(
-		  const float val)
+  //■■■■■■■■
+  inline void updateSingle(const float val)//SSEData[0] += val;
   {
 	  SSEData[0] += val;
-	  num++; numIn1++;
-	  shiftUp(false);
+	  num++;
+	  numIn1++;
+
+	  shiftUp(false);//
   }
 
-  inline void updateSSE(
-		  const __m128 val)
+//#if defined(ENABLE_SSE)
+  /*inline void updateSSE(const __m128 val)//SSEData[] += val[];
   {
 	  _mm_store_ps(SSEData, _mm_add_ps(_mm_load_ps(SSEData),val));
-	  num+=4;
+	  num += 4;
 	  numIn1++;
-	  shiftUp(false);
-  }
 
-  inline void updateSingleNoShift(
-		  const float val)
+	  shiftUp(false);//
+  }//*/
+/*#else
+  inline void updateCPU(const float[4] val)//SSEData[] += val[];
+  {
+	  SSEData[0] += val[0];
+	  SSEData[1] += val[1];
+	  SSEData[2] += val[2];
+	  SSEData[3] += val[3];
+
+	  num += 4;
+	  numIn1++;
+
+	  shiftUp(false);//
+  }
+#endif//*/
+  //■■■■■■■■
+  inline void updateSingleNoShift(const float val)//SSEData[0] += val;
   {
 	  SSEData[0] += val;
-	  num++; numIn1++;
-  }
-
-  inline void updateSSENoShift(
-		  const __m128 val)
-  {
-	  _mm_store_ps(SSEData, _mm_add_ps(_mm_load_ps(SSEData),val));
-	  num+=4;
+	  num++;
 	  numIn1++;
   }
-
-
+//#if defined(ENABLE_SSE)
+  /*inline void updateSSENoShift(const __m128 val)//SSEData[] += val[];
+  {
+	  printf("▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶\n");
+	  printf("▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶\n");
+	  _mm_store_ps(SSEData, _mm_add_ps(_mm_load_ps(SSEData),val));
+	  num += 4;
+	  numIn1++;
+  }//*/
+/*#else
+  inline void updateCPUNoShift(const float[4] val)//SSEData[] += val[];
+  {
+	  _mm_store_ps(SSEData, _mm_add_ps(_mm_load_ps(SSEData),val));
+	  num += 4;
+	  numIn1++;
+  }
+#endif//*/
 
 private:
   EIGEN_ALIGN16 float SSEData[4*1];
@@ -150,19 +177,22 @@ private:
   float numIn1, numIn1k, numIn1m;
 
 
-  void shiftUp(bool force)
+  //■■■■■■■■
+  void shiftUp(bool force)//1->1k->1m
   {
 	  if(numIn1 > 1000 || force)
 	  {
 		  _mm_store_ps(SSEData1k, _mm_add_ps(_mm_load_ps(SSEData),_mm_load_ps(SSEData1k)));
-		  numIn1k+=numIn1; numIn1=0;
+		  numIn1k+=numIn1;
+		  numIn1=0;
 		  memset(SSEData,0, sizeof(float)*4*1);
 	  }
 
 	  if(numIn1k > 1000 || force)
 	  {
 		  _mm_store_ps(SSEData1m, _mm_add_ps(_mm_load_ps(SSEData1k),_mm_load_ps(SSEData1m)));
-		  numIn1m+=numIn1k;  numIn1k=0;
+		  numIn1m+=numIn1k;
+		  numIn1k=0;
 		  memset(SSEData1k,0, sizeof(float)*4*1);
 	  }
   }
@@ -170,7 +200,8 @@ private:
 
 
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 template<int i>
 class AccumulatorX
 {
@@ -239,7 +270,8 @@ private:
 
 
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 class Accumulator14
 {
 public:
@@ -279,7 +311,8 @@ public:
   }
 
 
-  inline void updateSSE(
+  //SSE 이슈로 잠시 comment out
+  /*inline void updateSSE(
 		  const __m128 J0,const __m128 J1,
 		  const __m128 J2,const __m128 J3,
 		  const __m128 J4,const __m128 J5,
@@ -411,7 +444,7 @@ public:
 	  num+=4;
 	  numIn1++;
 	  shiftUp(false);
-  }
+  }//*/
 
 
   inline void updateSingle(
@@ -650,8 +683,9 @@ inline void finish()
 
 
 
-
-  inline void updateSSE(
+  //SSE 이슈로 잠시 comment out
+  //x[9], y[9]
+  /*inline void updateSSE(
 		  const float* const x,
 		  const float* const y,
 		  const float a,
@@ -741,7 +775,7 @@ inline void finish()
 	  numIn1++;
 	  shiftUp(false);
   }
-
+  //*/
 
 
 
@@ -975,7 +1009,8 @@ private:
 
 
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 class Accumulator9
 {
 public:
@@ -1014,14 +1049,10 @@ public:
   }
 
 
-  inline void updateSSE(
-		  const __m128 J0,const __m128 J1,
-		  const __m128 J2,const __m128 J3,
-		  const __m128 J4,const __m128 J5,
-		  const __m128 J6,const __m128 J7,
-		  const __m128 J8)
+  //여러번 호출
+  inline void updateSSE(const __m128 J0,const __m128 J1,const __m128 J2,const __m128 J3,const __m128 J4,const __m128 J5,const __m128 J6,const __m128 J7,const __m128 J8)
   {
-	  float* pt=SSEData;
+	  float* pt = SSEData;
 	  _mm_store_ps(pt, _mm_add_ps(_mm_load_ps(pt),_mm_mul_ps(J0,J0))); pt+=4;
 	  _mm_store_ps(pt, _mm_add_ps(_mm_load_ps(pt),_mm_mul_ps(J0,J1))); pt+=4;
 	  _mm_store_ps(pt, _mm_add_ps(_mm_load_ps(pt),_mm_mul_ps(J0,J2))); pt+=4;
@@ -1084,13 +1115,9 @@ public:
 
 
 
-
-  inline void updateSSE_eighted(
-		  const __m128 J0,const __m128 J1,
-		  const __m128 J2,const __m128 J3,
-		  const __m128 J4,const __m128 J5,
-		  const __m128 J6,const __m128 J7,
-		  const __m128 J8, const __m128 w)
+//#if defined(ENABLE_SSE)
+  inline void updateSSE_eighted(const __m128 J0, const __m128 J1, const __m128 J2, const __m128 J3, const __m128 J4, const __m128 J5, const __m128 J6, const __m128 J7, const __m128 J8,
+		  const __m128 w)
   {
 	  float* pt=SSEData;
 
@@ -1161,14 +1188,155 @@ public:
 	  numIn1++;
 	  shiftUp(false);
   }
+//#else
+  inline void updateCPU_eighted(float* J0, float* J1, float* J2, float* J3, float* J4, float* J5, float* J6, float* J7, float* J8,
+		  float* w)
+   {
+ 	  float* pt=SSEData;
+
+ 	  float tmp[4];
+
+ 	  float J0w[4];
+	  _cpu_mul_ps(J0w,J0,w);
+
+ 	  _cpu_mul_ps(tmp,J0w,J0);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J1);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J2);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J3);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J4);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J0w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+ 	  float J1w[4];
+ 	  _cpu_mul_ps(J1w,J1,w);
+
+ 	  _cpu_mul_ps(tmp,J1w,J1);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J2);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J3);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J4);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J1w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
 
 
-  inline void updateSingle(
-		  const float J0,const float J1,
-		  const float J2,const float J3,
-		  const float J4,const float J5,
-		  const float J6,const float J7,
-		  const float J8, int off=0)
+ 	  float J2w[4];
+      _cpu_mul_ps(J2w,J2,w);
+
+ 	  _cpu_mul_ps(tmp,J2w,J2);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J3);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J4);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J2w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J3w[4];
+      _cpu_mul_ps(J3w,J3,w);
+
+ 	  _cpu_mul_ps(tmp,J3w,J3);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J3w,J4);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J3w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J3w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J3w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J3w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J4w[4];
+ 	  _cpu_mul_ps(J4w,J4,w);
+
+ 	  _cpu_mul_ps(tmp,J4w,J4);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J4w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J4w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J4w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J4w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J5w[4];
+ 	  _cpu_mul_ps(J5w,J5,w);
+
+ 	  _cpu_mul_ps(tmp,J5w,J5);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J5w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J5w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J5w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J6w[4];
+ 	  _cpu_mul_ps(J6w,J6,w);
+
+ 	  _cpu_mul_ps(tmp,J6w,J6);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J6w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J6w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J7w[4];
+ 	  _cpu_mul_ps(J7w,J7,w);
+
+ 	  _cpu_mul_ps(tmp,J7w,J7);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+ 	  _cpu_mul_ps(tmp,J7w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+
+ 	  float J8w[4];
+ 	  _cpu_mul_ps(J8w,J8,w);
+
+ 	  _cpu_mul_ps(tmp,J8w,J8);
+ 	  _cpu_add_ps(pt,pt,tmp); pt+=4;
+
+ 	  num+=4;
+ 	  numIn1++;
+ 	  shiftUp(false);
+   }
+//#endif
+
+  inline void updateSingle(const float J0, const float J1, const float J2, const float J3, const float J4, const float J5, const float J6, const float J7, const float J8,
+		                   int off=0)
   {
 	  float* pt=SSEData+off;
 	  *pt += J0*J0; pt+=4;
@@ -1236,13 +1404,8 @@ public:
 	  shiftUp(false);
   }
 
-  inline void updateSingleWeighted(
-		  float J0, float J1,
-		  float J2, float J3,
-		  float J4, float J5,
-		  float J6, float J7,
-		  float J8, float w,
-		  int off=0)
+  inline void updateSingleWeighted(float J0, float J1, float J2, float J3, float J4, float J5, float J6, float J7, float J8,
+		                           float w, int off=0)
   {
 
 	  float* pt=SSEData+off;
@@ -1323,21 +1486,21 @@ private:
   {
 	  if(numIn1 > 1000 || force)
 	  {
-		  for(int i=0;i<45;i++)
-			  _mm_store_ps(SSEData1k+4*i, _mm_add_ps(_mm_load_ps(SSEData+4*i),_mm_load_ps(SSEData1k+4*i)));
-		  numIn1k+=numIn1;
-		  numIn1=0;
-		  memset(SSEData,0, sizeof(float)*4*45);
+		  for(int i=0;i<45;i++) _mm_store_ps(SSEData1k+4*i, _mm_add_ps(_mm_load_ps(SSEData+4*i),_mm_load_ps(SSEData1k+4*i)));
+		  numIn1k += numIn1;
+		  numIn1 = 0;
+		  memset(SSEData, 0, sizeof(float)*4*45);
 	  }
 
 	  if(numIn1k > 1000 || force)
 	  {
-		  for(int i=0;i<45;i++)
-			  _mm_store_ps(SSEData1m+4*i, _mm_add_ps(_mm_load_ps(SSEData1k+4*i),_mm_load_ps(SSEData1m+4*i)));
-		  numIn1m+=numIn1k;
-		  numIn1k=0;
-		  memset(SSEData1k,0, sizeof(float)*4*45);
+		  for(int i=0;i<45;i++) _mm_store_ps(SSEData1m+4*i, _mm_add_ps(_mm_load_ps(SSEData1k+4*i),_mm_load_ps(SSEData1m+4*i)));
+		  numIn1m += numIn1k;
+		  numIn1k = 0;
+		  memset(SSEData1k, 0, sizeof(float)*4*45);
 	  }
   }
+  //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  //■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 };
 }

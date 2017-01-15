@@ -73,7 +73,8 @@ CoarseInitializer::~CoarseInitializer()
 	delete[] JbBuffer_new;
 }
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 bool CoarseInitializer::trackFrame(FrameHessian* newFrameHessian, std::vector<IOWrap::Output3DWrapper*> &wraps)
 {
 	newFrame = newFrameHessian;
@@ -270,7 +271,8 @@ bool CoarseInitializer::trackFrame(FrameHessian* newFrameHessian, std::vector<IO
 
 	return snapped && frameID > snappedAt+5;
 }
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*> &wraps)
 {
     bool needCall = false;
@@ -320,14 +322,19 @@ void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*>
     for(IOWrap::Output3DWrapper* ow : wraps)
         ow->pushDepthImage(&iRImg);
 }
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
-// calculates residual, Hessian and Hessian-block neede for re-substituting depth.
-Vec3f CoarseInitializer::calcResAndGS(
-		int lvl, Mat88f &H_out, Vec8f &b_out,
-		Mat88f &H_out_sc, Vec8f &b_out_sc,
-		SE3 refToNew, AffLight refToNew_aff,
-		bool plot)
+
+
+
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+// calculates residual, Hessian and Hessian-block needed for re-substituting depth.
+//호출됨..
+Vec3f CoarseInitializer::calcResAndGS(int lvl, Mat88f &H_out, Vec8f &b_out, Mat88f &H_out_sc, Vec8f &b_out_sc, SE3 refToNew, AffLight refToNew_aff, bool plot)
 {
+	printf("	●CoarseInitializer::calcResAndGS()●\n");
 	int wl = w[lvl], hl = h[lvl];
 	Eigen::Vector3f* colorRef = firstFrame->dIp[lvl];
 	Eigen::Vector3f* colorNew = newFrame->dIp[lvl];
@@ -351,7 +358,6 @@ Vec3f CoarseInitializer::calcResAndGS(
 	Pnt* ptsl = points[lvl];
 	for(int i=0;i<npts;i++)
 	{
-
 		Pnt* point = ptsl+i;
 
 		point->maxstep = 1e10;
@@ -409,13 +415,9 @@ Vec3f CoarseInitializer::calcResAndGS(
 				break;
 			}
 
-
 			float residual = hitColor[0] - r2new_aff[0] * rlR - r2new_aff[1];
 			float hw = fabs(residual) < setting_huberTH ? 1 : setting_huberTH / fabs(residual);
 			energy += hw *residual*residual*(2-hw);
-
-
-
 
 			float dxdd = (t[0]-t[2]*u)/pt[2];
 			float dydd = (t[1]-t[2]*v)/pt[2];
@@ -458,7 +460,6 @@ Vec3f CoarseInitializer::calcResAndGS(
 			continue;
 		}
 
-
 		// add into energy.
 		E.updateSingle(energy);
 		point->isGood_new = true;
@@ -466,34 +467,19 @@ Vec3f CoarseInitializer::calcResAndGS(
 
 		// update Hessian matrix.
 		for(int i=0;i+3<patternNum;i+=4)
-			acc9.updateSSE(
-					_mm_load_ps(((float*)(&dp0))+i),
-					_mm_load_ps(((float*)(&dp1))+i),
-					_mm_load_ps(((float*)(&dp2))+i),
-					_mm_load_ps(((float*)(&dp3))+i),
-					_mm_load_ps(((float*)(&dp4))+i),
-					_mm_load_ps(((float*)(&dp5))+i),
-					_mm_load_ps(((float*)(&dp6))+i),
-					_mm_load_ps(((float*)(&dp7))+i),
-					_mm_load_ps(((float*)(&r))+i));
-
+		{
+			//printf("▲▲acc9.updateSSE()▲▲\n");
+			acc9.updateSSE(_mm_load_ps(((float*)(&dp0))+i), _mm_load_ps(((float*)(&dp1))+i), _mm_load_ps(((float*)(&dp2))+i), _mm_load_ps(((float*)(&dp3))+i),
+					       _mm_load_ps(((float*)(&dp4))+i), _mm_load_ps(((float*)(&dp5))+i), _mm_load_ps(((float*)(&dp6))+i), _mm_load_ps(((float*)(&dp7))+i),
+					       _mm_load_ps(((float*)(&r))+i));
+		}
 
 		for(int i=((patternNum>>2)<<2); i < patternNum; i++)
-			acc9.updateSingle(
-					(float)dp0[i],(float)dp1[i],(float)dp2[i],(float)dp3[i],
-					(float)dp4[i],(float)dp5[i],(float)dp6[i],(float)dp7[i],
-					(float)r[i]);
-
-
+			acc9.updateSingle((float)dp0[i],(float)dp1[i],(float)dp2[i],(float)dp3[i], (float)dp4[i],(float)dp5[i],(float)dp6[i],(float)dp7[i], (float)r[i]);
 	}
 
 	E.finish();
 	acc9.finish();
-
-
-
-
-
 
 	// calculate alpha energy, and decide if we cap it.
 	Accumulator11 EAlpha;
@@ -574,13 +560,12 @@ Vec3f CoarseInitializer::calcResAndGS(
 	b_out[1] += tlog[1]*alphaOpt*npts;
 	b_out[2] += tlog[2]*alphaOpt*npts;
 
-
-
-
+	printf("	●~CoarseInitializer::calcResAndGS()●\n");
 
 	return Vec3f(E.A, alphaEnergy ,E.num);
 }
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 float CoarseInitializer::rescale()
 {
 	float factor = 20*thisToNext.translation().norm();
@@ -602,8 +587,8 @@ float CoarseInitializer::rescale()
 
 	return factor;
 }
-
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 Vec3f CoarseInitializer::calcEC(int lvl)
 {
 	if(!snapped) return Vec3f(0,0,numPoints[lvl]);

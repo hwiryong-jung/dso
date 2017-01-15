@@ -41,24 +41,22 @@ struct CalibHessian;
 struct FrameHessian;
 struct PointFrameResidual;
 
-class CoarseTracker {
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+class CoarseTracker
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
 	CoarseTracker(int w, int h);
 	~CoarseTracker();
 
-	bool trackNewestCoarse(
-			FrameHessian* newFrameHessian,
-			SE3 &lastToNew_out, AffLight &aff_g2l_out,
-			int coarsestLvl, Vec5 minResForAbort,
-			IOWrap::Output3DWrapper* wrap=0);
+	bool trackNewestCoarse(FrameHessian* newFrameHessian, SE3 &lastToNew_out, AffLight &aff_g2l_out,
+			               int coarsestLvl, Vec5 minResForAbort, IOWrap::Output3DWrapper* wrap=0);
 
-	void setCoarseTrackingRef(
-			std::vector<FrameHessian*> frameHessians);
+	void setCoarseTrackingRef(std::vector<FrameHessian*> frameHessians);
 
-	void makeK(
-			CalibHessian* HCalib);
+	void makeK(CalibHessian* HCalib);
 
 	bool debugPrint, debugPlot;
 
@@ -87,9 +85,8 @@ public:
 	Vec5 lastResiduals;
 	Vec3 lastFlowIndicators;
 	double firstCoarseRMSE;
+
 private:
-
-
 	void makeCoarseDepthL0(std::vector<FrameHessian*> frameHessians);
 	float* idepth[PYR_LEVELS];
 	float* weightSums[PYR_LEVELS];
@@ -98,8 +95,11 @@ private:
 
 	Vec6 calcResAndGS(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l, float cutoffTH);
 	Vec6 calcRes(int lvl, SE3 refToNew, AffLight aff_g2l, float cutoffTH);
+//#if defined(ENABLE_SSE)
 	void calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l);
-	void calcGS(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l);
+//#else
+	void calcGSCPU(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l);
+//#endif
 
 	// pc buffers
 	float* pc_u[PYR_LEVELS];
@@ -122,8 +122,10 @@ private:
 	Accumulator9 acc;
 };
 
-
-class CoarseDistanceMap {
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+class CoarseDistanceMap
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -167,6 +169,7 @@ private:
 
 	void growDistBFS(int bfsNum);
 };
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 }
 

@@ -39,7 +39,8 @@ namespace dso
 struct CalibHessian;
 struct FrameHessian;
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 struct Pnt
 {
 public:
@@ -75,15 +76,16 @@ public:
 	float my_type;
 	float outlierTH;
 };
-
-class CoarseInitializer {
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+class CoarseInitializer
+{
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	CoarseInitializer(int w, int h);
 	~CoarseInitializer();
 
-
-	void setFirst(	CalibHessian* HCalib, FrameHessian* newFrameHessian);
+	void setFirst(CalibHessian* HCalib, FrameHessian* newFrameHessian);
 	bool trackFrame(FrameHessian* newFrameHessian, std::vector<IOWrap::Output3DWrapper*> &wraps);
 	void calcTGrads(FrameHessian* newFrameHessian);
 
@@ -96,9 +98,9 @@ public:
 	AffLight thisToNext_aff;
 	SE3 thisToNext;
 
-
 	FrameHessian* firstFrame;
 	FrameHessian* newFrame;
+
 private:
 	Mat33 K[PYR_LEVELS];
 	Mat33 Ki[PYR_LEVELS];
@@ -130,7 +132,6 @@ private:
 	Accumulator9 acc9;
 	Accumulator9 acc9SC;
 
-
 	Vec3f dGrads[PYR_LEVELS];
 
 	float alphaK;
@@ -138,12 +139,7 @@ private:
 	float regWeight;
 	float couplingWeight;
 
-	Vec3f calcResAndGS(
-			int lvl,
-			Mat88f &H_out, Vec8f &b_out,
-			Mat88f &H_out_sc, Vec8f &b_out_sc,
-			SE3 refToNew, AffLight refToNew_aff,
-			bool plot);
+	Vec3f calcResAndGS(int lvl, Mat88f &H_out, Vec8f &b_out, Mat88f &H_out_sc, Vec8f &b_out_sc, SE3 refToNew, AffLight refToNew_aff, bool plot);
 	Vec3f calcEC(int lvl); // returns OLD NERGY, NEW ENERGY, NUM TERMS.
 	void optReg(int lvl);
 
@@ -163,7 +159,8 @@ private:
 
 
 
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 struct FLANNPointcloud
 {
     inline FLANNPointcloud() {num=0; points=0;}
@@ -186,7 +183,8 @@ struct FLANNPointcloud
 	template <class BBOX>
 		bool kdtree_get_bbox(BBOX& /* bb */) const { return false; }
 };
-
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+//■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 }
 
 

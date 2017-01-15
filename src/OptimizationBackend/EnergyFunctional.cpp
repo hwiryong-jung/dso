@@ -329,6 +329,7 @@ double EnergyFunctional::calcMEnergyF()
 
 void EnergyFunctional::calcLEnergyPt(int min, int max, Vec10* stats, int tid)
 {
+	printf("●SSE WARNING (modified)●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●\n");//SSE때문에 임시 disable!!
 
 	Accumulator11 E;
 	E.initialize();
@@ -374,7 +375,7 @@ void EnergyFunctional::calcLEnergyPt(int min, int max, Vec10* stats, int tid)
 				r0 = _mm_add_ps(r0,r0);
 				r0 = _mm_add_ps(r0,Jdelta);
 				Jdelta = _mm_mul_ps(Jdelta,r0);
-				E.updateSSENoShift(Jdelta);
+				//E.updateSSENoShift(Jdelta);//SSE때문에 임시 disable!!
 			}
 			for(int i=((patternNum>>2)<<2); i < patternNum; i++)
 			{
@@ -398,14 +399,17 @@ double EnergyFunctional::calcLEnergyF_MT()
 	assert(EFAdjointsValid);
 	assert(EFIndicesValid);
 
+	printf("◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆\n");
+
 	double E = 0;
 	for(EFFrame* f : frames)
+	{
         E += f->delta_prior.cwiseProduct(f->prior).dot(f->delta_prior);
+	}
 
 	E += cDeltaF.cwiseProduct(cPriorF).dot(cDeltaF);
 
-	red->reduce(boost::bind(&EnergyFunctional::calcLEnergyPt,
-			this, _1, _2, _3, _4), 0, allPoints.size(), 50);
+	red->reduce(boost::bind(&EnergyFunctional::calcLEnergyPt, this, _1, _2, _3, _4), 0, allPoints.size(), 50);
 
 	return E+red->stats[0];
 }
